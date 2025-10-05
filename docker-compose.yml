@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=smartmcq
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Go Backend Service
+  backend:
+    build:
+      context: ./final-simple-hardcoded-v2
+      dockerfile: Dockerfile
+    container_name: golang-backend
+    expose:
+      - "8080"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/smartmcq?sslmode=disable
+      - ZEPTO_API_KEY=Zoho-enczapikey PHtE6r1ZFu3oizR78xRWt/fpE8ekPdwt/+w0KlEWsttAA/dWSk0B+Yt9xjG2o0p8UfkQEfLIzYtsub7ItujUdGfkY21PWGqyqK3sx/VYSPOZsbq6x00btlgZf0TYXYfocdRp0iXRud7cNA==
+      - ZEPTO_FROM_EMAIL=no-reply@smart-mcq.com
+      - ZEPTO_FROM_NAME=SmartMCQ
+      - FRONTEND_URL=http://frontend:3000
+      - BASE_URL=http://backend:8080
+    networks:
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Next.js Frontend Service
+  frontend:
+    build:
+      context: ./final-simple-hardcided-fe
+      dockerfile: Dockerfile
+    container_name: nextjs-frontend
+    expose:
+      - "3000"
+    environment:
+      - NEXT_PUBLIC_ADMIN_USERNAME=admin
+      - NEXT_PUBLIC_ADMIN_PASSWORD=admin123
+      - JWT_SECRET_KEY=your-secret-key-change-this-in-production-min-32-chars
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - app-network
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
