@@ -49,6 +49,11 @@ services:
     build:
       context: ./final-simple-hardcided-fe
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_ADMIN_USERNAME=admin
+        - NEXT_PUBLIC_ADMIN_PASSWORD=admin123
+        - JWT_SECRET_KEY=your-secret-key-change-this-in-production-min-32-chars
+        - NEXT_PUBLIC_API_BASE_URL=http://api.smart-mcq.com
     container_name: nextjs-frontend
     expose:
       - "3000"
