@@ -95,7 +95,9 @@ echo ""
 # Load environment variables
 if [ -f .env.production ]; then
     print_info "Loading production environment variables..."
-    export $(cat .env.production | grep -v '^#' | xargs)
+    set -a
+    source .env.production
+    set +a
     print_info "Environment variables loaded."
 else
     print_warning ".env.production file not found. Using default values from docker-compose.yml"

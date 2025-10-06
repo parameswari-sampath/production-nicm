@@ -44,30 +44,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # Next.js Frontend Service
-  frontend:
-    build:
-      context: ./final-simple-hardcided-fe
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_ADMIN_USERNAME=admin
-        - NEXT_PUBLIC_ADMIN_PASSWORD=admin123
-        - JWT_SECRET_KEY=your-secret-key-change-this-in-production-min-32-chars
-        - NEXT_PUBLIC_API_BASE_URL=http://api.smart-mcq.com
-    container_name: nextjs-frontend
-    expose:
-      - "3000"
-    environment:
-      - NEXT_PUBLIC_ADMIN_USERNAME=admin
-      - NEXT_PUBLIC_ADMIN_PASSWORD=admin123
-      - JWT_SECRET_KEY=your-secret-key-change-this-in-production-min-32-chars
-      - NEXT_PUBLIC_API_BASE_URL=http://api.smart-mcq.com
-    networks:
-      - app-network
-    depends_on:
-      - backend
-    restart: unless-stopped
-
   # Nginx Reverse Proxy
   nginx:
     build:
@@ -80,7 +56,6 @@ services:
     networks:
       - app-network
     depends_on:
-      - frontend
       - backend
     restart: unless-stopped
 
